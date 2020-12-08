@@ -1,6 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'dart:math';
 
 void main() => runApp(new MaterialApp(
       theme: ThemeData(
@@ -10,6 +13,24 @@ void main() => runApp(new MaterialApp(
       home: new MyApp(),
     ));
 
+class MotMsg {
+  final String text;
+  MotMsg({this.text});
+  factory MotMsg.fromJson(Map<String, dynamic> json) {
+    return MotMsg(text: json['msg_text']);
+  }
+}
+
+Future<List<MotMsg>> fetchMotMsg() async {
+  final response = await http.get('http://rayees80.somee.com/mapi/getmmsl');
+
+  List<MotMsg> l = (json.decode(response.body) as List)
+      .map((x) => MotMsg.fromJson(x))
+      .toList();
+
+  return l;
+}
+
 class MyApp extends StatefulWidget {
   @override
   _MyAppState createState() => _MyAppState();
@@ -18,12 +39,19 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
+  List<MotMsg> mmsl;
+  var rnd = new Random();
 
   @override
   void initState() {
     super.initState();
+    fetchMotMsg().then((result) {
+      setState(() {
+        mmsl = result;
+      });
+    });
     var initializationSettingsAndroid =
-        AndroidInitializationSettings('flutter_devs');
+        AndroidInitializationSettings('squ_logo');
     var initializationSettingsIOs = IOSInitializationSettings();
     var initSetttings = InitializationSettings(
         initializationSettingsAndroid, initializationSettingsIOs);
@@ -45,7 +73,7 @@ class _MyAppState extends State<MyApp> {
     return Scaffold(
       appBar: new AppBar(
         backgroundColor: Colors.red,
-        title: new Text('Flutter notification demo'),
+        title: new Text('SEESPA Notification Demo'),
       ),
       body: new Center(
         child: Column(
@@ -93,22 +121,22 @@ class _MyAppState extends State<MyApp> {
       'media channel description',
       color: Colors.red,
       enableLights: true,
-      largeIcon: DrawableResourceAndroidBitmap("flutter_devs"),
+      largeIcon: DrawableResourceAndroidBitmap("squ_logo"),
       styleInformation: MediaStyleInformation(),
     );
     var platformChannelSpecifics =
         NotificationDetails(androidPlatformChannelSpecifics, null);
-    await flutterLocalNotificationsPlugin.show(
-        0, 'notification title', 'notification body', platformChannelSpecifics);
+    await flutterLocalNotificationsPlugin.show(0, 'SEESPA Motivation',
+        '' + mmsl[rnd.nextInt(mmsl.length - 1)].text, platformChannelSpecifics);
   }
 
   Future<void> showBigPictureNotification() async {
     var bigPictureStyleInformation = BigPictureStyleInformation(
-        DrawableResourceAndroidBitmap("flutter_devs"),
-        largeIcon: DrawableResourceAndroidBitmap("flutter_devs"),
-        contentTitle: 'flutter devs',
+        DrawableResourceAndroidBitmap("squ_logo"),
+        largeIcon: DrawableResourceAndroidBitmap("squ_logo"),
+        contentTitle: 'SEESPA Motivation',
         htmlFormatContentTitle: true,
-        summaryText: 'summaryText',
+        summaryText: '' + mmsl[rnd.nextInt(mmsl.length - 1)].text,
         htmlFormatSummaryText: true);
     var androidPlatformChannelSpecifics = AndroidNotificationDetails(
         'big text channel id',
@@ -117,8 +145,8 @@ class _MyAppState extends State<MyApp> {
         styleInformation: bigPictureStyleInformation);
     var platformChannelSpecifics =
         NotificationDetails(androidPlatformChannelSpecifics, null);
-    await flutterLocalNotificationsPlugin.show(
-        0, 'big text title', 'silent body', platformChannelSpecifics,
+    await flutterLocalNotificationsPlugin.show(0, 'SEESPA Motivation',
+        '' + mmsl[rnd.nextInt(mmsl.length - 1)].text, platformChannelSpecifics,
         payload: "big image notifications");
   }
 
@@ -129,16 +157,16 @@ class _MyAppState extends State<MyApp> {
       'channel id',
       'channel name',
       'channel description',
-      icon: 'flutter_devs',
-      largeIcon: DrawableResourceAndroidBitmap('flutter_devs'),
+      icon: 'squ_logo',
+      largeIcon: DrawableResourceAndroidBitmap('squ_logo'),
     );
     var iOSPlatformChannelSpecifics = IOSNotificationDetails();
     var platformChannelSpecifics = NotificationDetails(
         androidPlatformChannelSpecifics, iOSPlatformChannelSpecifics);
     await flutterLocalNotificationsPlugin.schedule(
         0,
-        'scheduled title',
-        'scheduled body',
+        'SEESPA Motivation',
+        '' + mmsl[rnd.nextInt(mmsl.length - 1)].text,
         scheduledNotificationDateTime,
         platformChannelSpecifics);
   }
@@ -148,14 +176,20 @@ class _MyAppState extends State<MyApp> {
   }
 
   showNotification() async {
+    fetchMotMsg().then((result) {
+      setState(() {
+        mmsl = result;
+      });
+    });
     var android = new AndroidNotificationDetails(
         'id', 'channel ', 'description',
         priority: Priority.High, importance: Importance.Max);
     var iOS = new IOSNotificationDetails();
     var platform = new NotificationDetails(android, iOS);
-    await flutterLocalNotificationsPlugin.show(
-        0, 'Flutter devs', 'Flutter Local Notification Demo', platform,
-        payload: 'Welcome to the Local Notification demo ');
+    await flutterLocalNotificationsPlugin.show(0, 'SEESPA Motivation',
+        '' + mmsl[rnd.nextInt(mmsl.length - 1)].text, platform,
+        payload:
+            'Welcome to the Local Notification demo ' + mmsl.length.toString());
   }
 }
 
