@@ -4,6 +4,11 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:math';
+import 'package:workmanager/workmanager.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
+// List<MotMsg> mmsl2 = new List<MotMsg>();
+final storage = new FlutterSecureStorage();
 
 void main() => runApp(new MaterialApp(
       theme: ThemeData(
@@ -21,8 +26,58 @@ class MotMsg {
   }
 }
 
+void callbackdis() async {
+  Workmanager.executeTask((task, inputData) async {
+    // fetchMotMsg().then((result) {
+    //   mmsl2 = result;
+    // });
+
+    // //_MyAppState().showNotification();
+    // _MyAppState _myAppState = context.findAncestorStateOfType<_MyAppState>();
+    // _myAppState.showNotification();
+    String motmsg = await storage.read(key: "motmsg");
+
+    final response = await http.get('http://seespa.somee.com/mapi/getmmsl');
+
+    List<MotMsg> l = (json.decode(response.body) as List)
+        .map((x) => MotMsg.fromJson(x))
+        .toList();
+    var rnd = new Random();
+    print("------------------ motmsg list length " + l.length.toString());
+    print("------------------ random under list length " +
+        rnd.nextInt(l.length - 1).toString());
+    motmsg = l[rnd.nextInt(l.length - 1)].text;
+    storage.write(key: "motmsg", value: motmsg);
+    print("------------------ new motmsg is " + motmsg);
+    // fetchMotMsg().then((result) async {
+    //   var rnd = new Random();
+    //   String motmsg1 = result[rnd.nextInt(result.length - 1)].text;
+    //
+    //   storage.write(key: "motmsg", value: motmsg1);
+    // });
+
+    if (motmsg != null) {
+      print("------------------ motmsg is " + motmsg);
+      FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+          FlutterLocalNotificationsPlugin();
+      var android = new AndroidNotificationDetails(
+          'id', 'channel ', 'description',
+          priority: Priority.High, importance: Importance.Max);
+      var iOS = new IOSNotificationDetails();
+      var platform = new NotificationDetails(android, iOS);
+      await flutterLocalNotificationsPlugin.show(0, 'SEESPA Motivation',
+          'Every 15 mins notification. ' + motmsg, platform,
+          payload: 'Welcome to the Local Notification demo. ' + motmsg);
+    } else {
+      print("------------------ motmsg is null");
+    }
+
+    return Future.value(true);
+  });
+}
+
 Future<List<MotMsg>> fetchMotMsg() async {
-  final response = await http.get('http://rayees80.somee.com/mapi/getmmsl');
+  final response = await http.get('http://seespa.somee.com/mapi/getmmsl');
 
   List<MotMsg> l = (json.decode(response.body) as List)
       .map((x) => MotMsg.fromJson(x))
@@ -45,11 +100,19 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
+
     fetchMotMsg().then((result) {
       setState(() {
         mmsl = result;
+        storage.write(
+            key: "motmsg", value: mmsl[rnd.nextInt(mmsl.length - 1)].text);
       });
     });
+
+    Workmanager.initialize(callbackdis, isInDebugMode: true);
+    Workmanager.registerPeriodicTask("1", "test",
+        frequency: Duration(minutes: 15));
+
     var initializationSettingsAndroid =
         AndroidInitializationSettings('squ_logo');
     var initializationSettingsIOs = IOSInitializationSettings();
@@ -166,7 +229,7 @@ class _MyAppState extends State<MyApp> {
     await flutterLocalNotificationsPlugin.schedule(
         0,
         'SEESPA Motivation',
-        '' + mmsl[rnd.nextInt(mmsl.length - 1)].text,
+        'This is SSESPA notification',
         scheduledNotificationDateTime,
         platformChannelSpecifics);
   }
