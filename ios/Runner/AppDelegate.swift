@@ -16,6 +16,7 @@ import shared_preferences
     }
     GeneratedPluginRegistrant.register(with: self)
     WorkmanagerPlugin.register(with: self.registrar(forPlugin: "be.tramckrijte.workmanager.WorkmanagerPlugin"))
+    UIApplication.shared.setMinimumBackgroundFetchInterval(TimeInterval(60*15))
     WorkmanagerPlugin.setPluginRegistrantCallback { registry in
             // registry in this case is the FlutterEngine that is created in Workmanager's performFetchWithCompletionHandler
             // This will make other plugins available during a background fetch
