@@ -1,6 +1,9 @@
 import UIKit
 import Flutter
 import workmanager
+import devicelocale
+import flutter_local_notifications
+import shared_preferences
 
 @UIApplicationMain
 @objc class AppDelegate: FlutterAppDelegate {
@@ -25,4 +28,9 @@ import workmanager
         }
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
+
+  override func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+        completionHandler([.alert, .sound, .badge]) // shows banner even if app is in foreground
+    }
+
 }
